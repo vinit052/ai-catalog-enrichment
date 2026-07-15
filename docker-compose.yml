@@ -30,7 +30,7 @@ services:
     image: postgres:16-alpine
     container_name: local-postgres
     environment:
-      POSTGRES_DB: myapp
+      POSTGRES_DB: catalog_enrichment
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
     ports:
@@ -42,9 +42,10 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U myuser"
+          "pg_isready -U myuser -d catalog_enrichment"
         ]
       interval: 5s
+      timeout: 5s
       retries: 5
 
   redis:

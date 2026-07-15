@@ -56,7 +56,6 @@ class ProductImportValidator:
             else:
                 status = ValidationStatus.VALID
 
-
             results.append(
                 {
                     "row": index + 1,
