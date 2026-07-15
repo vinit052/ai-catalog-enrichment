@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from config import settings
-from routers import health, products
+from core.config import settings
+from routers import health, upload
 
 
 app = FastAPI(
@@ -20,27 +20,14 @@ Supports:
 )
 
 
-app.include_router(
-    health.router,
-    prefix="/health",
-    tags=["Health"],
-)
+app.include_router(health.router)
+app.include_router(upload.router)
 
 
-app.include_router(
-    products.router,
-    prefix="/products",
-    tags=["Products"],
-)
-
-
-@app.get(
-    "/",
-    tags=["System"],
-)
-def home():
+@app.get("/", tags=["System"])
+async def home():
     return {
-        "name": "AI Catalog Enrichment API",
+        "name": settings.app.NAME,
         "status": "running",
-        "environment": settings.APP_ENV,
+        "environment": settings.app.ENV,
     }

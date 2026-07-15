@@ -1,11 +1,11 @@
 import redis
 
-from config import settings
+from core.config import settings
 
 
 
 redis_client = redis.from_url(
-    settings.REDIS_URL,
+    settings.redis.URL,
     decode_responses=True
 )
 

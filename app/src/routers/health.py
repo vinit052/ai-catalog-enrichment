@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from redis_client import get_redis
-from qdrant_service import get_qdrant
+from core.infra.redis.redis_client import get_redis
+from core.infra.qdrant.client import get_qdrant
 
 
 router = APIRouter()

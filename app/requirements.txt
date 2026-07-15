@@ -1,12 +1,11 @@
 fastapi
 uvicorn[standard]
-
+python-multipart
+pandas
+openpyxl
 python-dotenv
 
 sqlalchemy
 psycopg2-binary
-
 redis
-
 qdrant-client
-python-multipart
