@@ -14,7 +14,7 @@ class ProductImportValidator:
         "description"
     ]
 
-    def validate(self, records):
+    def validate(self, import_id, records):
 
         results = []
 
@@ -24,7 +24,7 @@ class ProductImportValidator:
             warnings = []
 
             # Required field validation
-            for field in self.REQUIRED_FIELDS:
+            for field in  self.REQUIRED_FIELDS:
 
                 if not record.get(field):
                     errors.append(
@@ -56,6 +56,7 @@ class ProductImportValidator:
             else:
                 status = ValidationStatus.VALID
 
+           
             results.append(
                 {
                     "row": index + 1,

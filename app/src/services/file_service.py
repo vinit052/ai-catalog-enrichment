@@ -1,14 +1,19 @@
+from core.mappers.import_mapper import (
+    create_import_model,
+)
+
+from core.mappers.item_mapper import (
+    create_item_models,
+)
+
 from parsers.csv_parser import CSVParser
 from parsers.excel_parser import ExcelParser
 from parsers.image_parser import ImageParser
+
 from validators.product_import_validator import (
     ProductImportValidator,
     ValidationStatus,
 )
-
-# Add your repositories/services here later
-# from app.src.services.product_service import ProductService
-# from app.src.services.error_report_service import ErrorReportService
 
 
 PARSERS = {
@@ -21,13 +26,17 @@ PARSERS = {
 }
 
 
-async def process_file(file, import_id):
+async def process_file(
+    file,
+    import_service,
+):
 
     extension = (
         file.filename
         .split(".")[-1]
         .lower()
     )
+
 
     parser = PARSERS.get(extension)
 
@@ -36,27 +45,33 @@ async def process_file(file, import_id):
             "Unsupported file format"
         )
 
+
     # Parse uploaded file
     records = await parser.parse(file)
 
+
     # Validate records
-    validation_result = ProductImportValidator().validate(
-        records
+    validation_result = (
+        ProductImportValidator()
+        .validate(
+            None,
+            records,
+        )
     )
 
-    rows = validation_result["rows"]
 
     valid_records = []
     invalid_records = []
 
 
-    for row in rows:
+    for row in validation_result["rows"]:
 
         if row["status"] == ValidationStatus.VALID:
 
             valid_records.append(
                 row["data"]
             )
+
 
         else:
 
@@ -68,50 +83,58 @@ async def process_file(file, import_id):
                         row.get("errors", [])
                         +
                         row.get("warnings", [])
-                    )
+                    ),
                 }
             )
 
 
-    #
-    # Store only valid records
-    #
-    # await ProductService.bulk_create(
-    #     valid_records
-    # )
+    # Create Import model
+    import_model = create_import_model(
+        filename=file.filename,
+        total_records=len(records),
+        valid_records=len(valid_records),
+        invalid_records=len(invalid_records),
+    )
 
 
-    #
-    # Generate error report
-    #
+    # Save import + items in one transaction
+    saved_import = (
+        import_service
+        .create_import_with_items(
+            import_record=import_model,
+            valid_records=valid_records,
+        )
+    )
+
+
     error_file = None
+
 
     if invalid_records:
 
-        # error_file = await ErrorReportService.create(
-        #     import_id,
-        #     invalid_records
-        # )
-
+        # Later replace with ErrorReportService
         error_file = (
-            f"/imports/{import_id}/errors.xlsx"
+            f"/imports/{saved_import.id}/errors.xlsx"
         )
 
 
     return {
-        "import_id": import_id,
+        "import_id": saved_import.id,
         "filename": file.filename,
+
         "summary": {
             "total_records": len(records),
             "valid_records": len(valid_records),
             "invalid_records": len(invalid_records),
         },
+
         "processing": {
             "valid_records_stored": True,
-            "enrichment_status": "PENDING"
+            "enrichment_status": "PENDING",
         },
+
         "error_report": {
             "available": bool(error_file),
-            "file": error_file
-        }
+            "file": error_file,
+        },
     }

@@ -1,10 +1,21 @@
-from .connection import engine
+from sqlalchemy.orm import sessionmaker
+
+from core.infra.database.connection import engine
 
 
-def get_database():
-    connection = engine.connect()
+SessionLocal = sessionmaker(
+    bind=engine,
+    autoflush=False,
+    autocommit=False
+)
+
+
+def get_db():
+
+    db = SessionLocal()
 
     try:
-        yield connection
+        yield db
+
     finally:
-        connection.close()
+        db.close()
