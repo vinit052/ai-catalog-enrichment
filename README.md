@@ -56,33 +56,98 @@ Planned features:
 
 # Project Structure
 
-```
-ai-catalog-enrichment/
+## Project Structure
 
-├── docker-compose.yml
+```
+.
 ├── .env
 ├── .env.example
+├── .gitignore
 ├── README.md
+├── docker-compose.yml
 │
 └── app/
+    ├── Dockerfile
+    ├── requirements.txt
+    │
     └── src/
+        ├── main.py                         # FastAPI application entry point
+        ├── dependencies.py                 # Dependency injection configuration
+        ├── alembic.ini                      # Alembic configuration
         │
-        ├── main.py
-        ├── config.py
-        ├── redis_client.py
-        ├── qdrant_service.py
+        ├── alembic/                         # Database migrations
+        │   ├── env.py
+        │   ├── README
+        │   ├── script.py.mako
+        │   └── versions/
+        │       └── dab8637ca681_create_imports_and_items_tables.py
         │
-        ├── routers/
-        │   ├── __init__.py
-        │   ├── health.py
-        │   └── products.py
+        ├── core/                            # Core application layer
+        │   │
+        │   ├── config.py                    # Application configuration
+        │   │
+        │   ├── exceptions/                  # Custom exceptions
+        │   │   ├── database.py
+        │   │   └── service.py
+        │   │
+        │   ├── infra/                       # Infrastructure layer
+        │   │   │
+        │   │   ├── database/
+        │   │   │   ├── base.py              # SQLAlchemy Base
+        │   │   │   ├── connection.py        # Database connection
+        │   │   │   ├── session.py           # Database session handling
+        │   │   │   │
+        │   │   │   └── models/
+        │   │   │       ├── import_model.py  # Import table ORM model
+        │   │   │       ├── item.py          # Item table ORM model
+        │   │   │       └── __init__.py
+        │   │   │
+        │   │   ├── llm/                     # LLM integrations
+        │   │   │   └── __init__.py
+        │   │   │
+        │   │   ├── qdrant/                  # Vector database integration
+        │   │   │   ├── client.py
+        │   │   │   └── __init__.py
+        │   │   │
+        │   │   └── redis/                   # Redis integration
+        │   │       └── redis_client.py
+        │   │
+        │   ├── mappers/                     # Data transformation layer
+        │   │   ├── import_mapper.py         # Creates Import model objects
+        │   │   └── item_mapper.py           # Creates Item model objects
+        │   │
+        │   ├── repositories/                 # Database access layer
+        │   │   ├── base_repository.py
+        │   │   ├── import_repository.py     # Import database operations
+        │   │   └── item_repository.py       # Item database operations
+        │   │
+        │   └── services/                    # Domain services
+        │       ├── import_service.py        # Import transaction workflow
+        │       └── item_service.py          # Item operations
         │
-        ├── services/
-        │   ├── __init__.py
-        │   └── file_service.py
+        ├── routers/                         # API endpoints
+        │   ├── health.py                    # Health check API
+        │   ├── upload.py                    # File upload API
+        │   ├── item.py                      # Item APIs
+        │   └── __init__.py
         │
-        └── uploads/
+        ├── services/                        # Application services
+        │   └── file_service.py              # File processing workflow
+        │
+        ├── parsers/                         # File parsing layer
+        │   ├── base_parser.py
+        │   ├── csv_parser.py
+        │   ├── excel_parser.py
+        │   ├── image_parser.py
+        │   └── __init__.py
+        │
+        ├── validators/                      # Validation layer
+        │   └── product_import_validator.py
+        │
+        └── schemas/                          # Request/response schemas
+            └── product.py
 ```
+
 
 ---
 
