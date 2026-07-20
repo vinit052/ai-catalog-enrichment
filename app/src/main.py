@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from core.config import settings
-from routers import health, upload
+from routers import health, upload, imports
 
 
 app = FastAPI(
@@ -22,6 +22,7 @@ Supports:
 
 app.include_router(health.router)
 app.include_router(upload.router)
+app.include_router(imports.router)
 
 
 @app.get("/", tags=["System"])

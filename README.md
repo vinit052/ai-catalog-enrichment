@@ -6,6 +6,33 @@ The application is containerized for local development and structured to support
 
 ---
 
+## Table of Contents
+
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
+- [Architecture Overview](#architecture-overview)
+- [Local Development Setup](#local-development-setup)
+  - [Prerequisites](#prerequisites)
+  - [Environment Configuration](#environment-configuration)
+  - [Start Application](#start-application)
+  - [Stop Application](#stop-application)
+- [Application URLs](#application-urls)
+- [API Endpoints](#api-endpoints)
+  - [System Information](#system-information)
+  - [Health Check](#health-check)
+  - [Product Upload](#product-upload)
+- [Docker Commands](#docker-commands)
+  - [View Logs](#view-logs)
+  - [Restart Application](#restart-application)
+  - [Access Container Shell](#access-container-shell)
+  - [Rebuild After Dependency Changes](#rebuild-after-dependency-changes)
+- [Development Mode](#development-mode)
+- [Future Production Architecture](#future-production-architecture)
+- [License](#license)
+
+---
+
 ## Features
 
 Current features:
@@ -56,96 +83,106 @@ Planned features:
 
 # Project Structure
 
-## Project Structure
-
 ```
-.
-├── .env
-├── .env.example
-├── .gitignore
-├── README.md
-├── docker-compose.yml
+├── .env                                      # Local environment variables
+├── .env.example                              # Environment variable template
+├── .gitignore                                # Git ignore configuration
+├── README.md                                 # Project documentation
+├── docker-compose.yml                        # Local development services
 │
 └── app/
-    ├── Dockerfile
-    ├── requirements.txt
+    ├── Dockerfile                            # Application container setup
+    ├── requirements.txt                      # Python dependencies
     │
-    └── src/
-        ├── main.py                         # FastAPI application entry point
-        ├── dependencies.py                 # Dependency injection configuration
-        ├── alembic.ini                      # Alembic configuration
+    └── src/                                  # Application source code
+        ├── main.py                           # FastAPI application entry point
+        ├── alembic.ini                       # Database migration configuration
         │
-        ├── alembic/                         # Database migrations
-        │   ├── env.py
+        ├── alembic/                          # Database migration management
         │   ├── README
-        │   ├── script.py.mako
-        │   └── versions/
+        │   ├── env.py                        # Alembic migration environment
+        │   ├── script.py.mako                # Migration template
+        │   └── versions/                     # Migration history
         │       └── dab8637ca681_create_imports_and_items_tables.py
+        │                                      # Creates imports and items tables
         │
-        ├── core/                            # Core application layer
+        ├── dependencies/                     # FastAPI dependency injection layer
+        │   ├── __init__.py
+        │   ├── database.py                   # Database dependency provider
+        │   └── services.py                   # Service dependency wiring
+        │
+        ├── core/                             # Core business application layer
+        │   ├── __init__.py
+        │   ├── config.py                     # Application configuration
         │   │
-        │   ├── config.py                    # Application configuration
-        │   │
-        │   ├── exceptions/                  # Custom exceptions
+        │   ├── exceptions/                   # Custom application exceptions
         │   │   ├── database.py
         │   │   └── service.py
         │   │
-        │   ├── infra/                       # Infrastructure layer
+        │   ├── infra/                        # External infrastructure layer
+        │   │   ├── __init__.py
         │   │   │
-        │   │   ├── database/
-        │   │   │   ├── base.py              # SQLAlchemy Base
-        │   │   │   ├── connection.py        # Database connection
-        │   │   │   ├── session.py           # Database session handling
-        │   │   │   │
-        │   │   │   └── models/
-        │   │   │       ├── import_model.py  # Import table ORM model
-        │   │   │       ├── item.py          # Item table ORM model
-        │   │   │       └── __init__.py
+        │   │   ├── database/                 # Database infrastructure
+        │   │   │   ├── __init__.py
+        │   │   │   ├── base.py               # SQLAlchemy base class
+        │   │   │   ├── connection.py         # Database connection setup
+        │   │   │   ├── session.py            # Database session management
+        │   │   │   └── models/               # Database ORM models
+        │   │   │       ├── __init__.py
+        │   │   │       ├── import_model.py   # Import table model
+        │   │   │       └── item.py           # Item table model
         │   │   │
-        │   │   ├── llm/                     # LLM integrations
+        │   │   ├── llm/                      # LLM integration layer
         │   │   │   └── __init__.py
         │   │   │
-        │   │   ├── qdrant/                  # Vector database integration
-        │   │   │   ├── client.py
-        │   │   │   └── __init__.py
+        │   │   ├── qdrant/                   # Vector database integration
+        │   │   │   ├── __init__.py
+        │   │   │   └── client.py
         │   │   │
-        │   │   └── redis/                   # Redis integration
-        │   │       └── redis_client.py
+        │   │   └── redis/                    # Redis messaging integration
+        │   │       ├── consumer.py           # Redis consumer
+        │   │       ├── publisher.py          # Redis publisher
+        │   │       └── redis_client.py       # Redis connection client
         │   │
-        │   ├── mappers/                     # Data transformation layer
-        │   │   ├── import_mapper.py         # Creates Import model objects
-        │   │   └── item_mapper.py           # Creates Item model objects
+        │   ├── mappers/                      # Data transformation layer
+        │   │   ├── import_mapper.py          # Import entity mapper
+        │   │   └── item_mapper.py            # Item entity mapper
         │   │
         │   ├── repositories/                 # Database access layer
         │   │   ├── base_repository.py
-        │   │   ├── import_repository.py     # Import database operations
-        │   │   └── item_repository.py       # Item database operations
+        │   │   ├── import_repository.py      # Import database operations
+        │   │   └── item_repository.py        # Item database operations
         │   │
-        │   └── services/                    # Domain services
-        │       ├── import_service.py        # Import transaction workflow
-        │       └── item_service.py          # Item operations
+        │   └── services/                     # Business logic layer
+        │       ├── __init__.py
+        │       ├── import_service.py         # Import business operations
+        │       ├── item_service.py           # Item business operations
+        │       │
+        │       └── ingestion/                # Import ingestion workflow
+        │           ├── __init__.py
+        │           ├── ingestion_service.py  # Main ingestion orchestration
+        │           ├── parser_service.py     # File parsing workflow
+        │           ├── validation_service.py # Data validation workflow
+        │           ├── enrichment_queue_service.py
+        │           │                         # Enrichment queue handling
+        │           └── response_builder.py   # API response builder
         │
-        ├── routers/                         # API endpoints
-        │   ├── health.py                    # Health check API
-        │   ├── upload.py                    # File upload API
-        │   ├── item.py                      # Item APIs
-        │   └── __init__.py
+        ├── parsers/                          # File parsing implementations
+        │   ├── __init__.py
+        │   ├── base_parser.py                # Parser base interface
+        │   ├── csv_parser.py                 # CSV parser
+        │   ├── excel_parser.py               # Excel parser
+        │   └── image_parser.py               # Image parser
         │
-        ├── services/                        # Application services
-        │   └── file_service.py              # File processing workflow
+        ├── routers/                          # FastAPI API routes
+        │   ├── __init__.py
+        │   ├── health.py                     # Health check endpoint
+        │   ├── imports.py                    # Import APIs
+        │   ├── item.py                       # Item APIs
+        │   └── upload.py                     # File upload APIs
         │
-        ├── parsers/                         # File parsing layer
-        │   ├── base_parser.py
-        │   ├── csv_parser.py
-        │   ├── excel_parser.py
-        │   ├── image_parser.py
-        │   └── __init__.py
-        │
-        ├── validators/                      # Validation layer
-        │   └── product_import_validator.py
-        │
-        └── schemas/                          # Request/response schemas
-            └── product.py
+        └── validators/                       # Business validation layer
+            └── product_import_validator.py   # Product import validation rules
 ```
 
 
@@ -207,19 +244,14 @@ Build containers:
 ```bash
 docker compose build
 ```
-
 Start services:
-
 ```bash
 docker compose up -d
 ```
-
 Check running services:
-
 ```bash
 docker compose ps
 ```
-
 Expected services:
 
 ```
@@ -402,26 +434,56 @@ Source code changes automatically reload the API.
 # Architecture Overview
 
 ```
-Client
- |
- |
-FastAPI
- |
- ├── Routers
- │     |
- │     ├── Health API
- │     └── Product API
- |
- ├── Services
- │     |
- │     └── File Processing
- |
- |
- ├── PostgreSQL
- |
- ├── Redis
- |
- └── Qdrant
+  Client
+  |
+  |
+  FastAPI Application
+  |
+  ├── Routers (API Layer)
+  │     |
+  │     ├── Health API
+  │     ├── Import API
+  │     ├── Upload API
+  │     └── Item API
+  |
+  ├── Dependencies
+  │     |
+  │     ├── Database Session Injection
+  │     └── Service Dependency Wiring
+  |
+  ├── Core Services (Business Layer)
+  │     |
+  │     ├── Ingestion Service
+  │     │     |
+  │     │     ├── Parser Service
+  │     │     ├── Validation Service
+  │     │     ├── Import Service
+  │     │     └── Enrichment Queue Service
+  │     |
+  │     ├── Import Service
+  │     └── Item Service
+  |
+  ├── Repositories (Data Access Layer)
+  │     |
+  │     ├── Import Repository
+  │     └── Item Repository
+  |
+  ├── Infrastructure Layer
+  │     |
+  │     ├── PostgreSQL
+  │     ├── Redis
+  │     ├── Qdrant
+  │     └── LLM Integrations
+  |
+  ├── Parsers
+  │     |
+  │     ├── CSV Parser
+  │     ├── Excel Parser
+  │     └── Image Parser
+  |
+  └── Validators
+        |
+        └── Product Import Validation
 ```
 
 ---
@@ -446,7 +508,6 @@ Production:
 Managed PostgreSQL
 Managed Redis
 Cloud Qdrant
-Object Storage
 Background Workers
 ```
 
