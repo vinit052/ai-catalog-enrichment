@@ -1,3 +1,4 @@
+from core.infra.redis.publisher import RedisPublisher
 from core.mappers.import_mapper import (
     create_import_model,
 )
@@ -98,7 +99,7 @@ async def process_file(
 
 
     # Save import + items in one transaction
-    saved_import = (
+    saved_import, saved_items = (
         import_service
         .create_import_with_items(
             import_record=import_model,
@@ -106,9 +107,16 @@ async def process_file(
         )
     )
 
+    # Publish each item to Redis for further processing
+    for item in saved_items:
+        RedisPublisher.publish(
+            {
+                "item_id": item.id,
+                "import_id": saved_import.id,
+            }
+        )
 
     error_file = None
-
 
     if invalid_records:
 

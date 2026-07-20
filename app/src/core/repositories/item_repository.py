@@ -9,6 +9,8 @@ class ItemRepository(BaseRepository):
         items: list[Item]
     ):
         self.db.add_all(items)
+        self.db.flush()
+        return items
 
     def get_pending_items(
         self,

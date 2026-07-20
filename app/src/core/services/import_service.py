@@ -50,14 +50,14 @@ class ImportService:
             )
 
 
-            items = create_item_models(
+            saved_items = create_item_models(
                 import_id=saved_import.id,
                 valid_records=valid_records,
             )
 
 
             self.item_repository.create_bulk(
-                items
+                saved_items
             )
 
 
@@ -67,7 +67,7 @@ class ImportService:
                 saved_import
             )
 
-            return saved_import
+            return saved_import, saved_items
 
 
         except Exception:
